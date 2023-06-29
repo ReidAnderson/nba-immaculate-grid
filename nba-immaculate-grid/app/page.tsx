@@ -1,39 +1,68 @@
 'use client'
 
-import { Autocomplete, Box, TextField } from '@mui/material';
+import { Autocomplete, Box, TextField, ThemeProvider, createTheme } from '@mui/material';
 import Image from 'next/image'
 import { useState } from 'react';
+import playerData from './players.json';
 
 interface SquareProps {
   index: number;
   value: string;
+  isSelected: boolean;
   handleClick(index: number): void;
 }
 
+interface ComboBoxProps {
+  onChange(event: any, value: any): void;
+}
+
+const puzzle: { [key: string]: string[] } = {
+  row_labels: ['Knicks', 'Timberwolves', '1st Team All-NBA'],
+  col_labels: ['76ers', 'Kings', '25,000 Career Points']
+}
+
+const answer: { [key: number | string]: number[] } = {
+  0: [691, 703, 782, 792, 876, 882, 1094, 1212, 1308, 1424, 1452, 1822, 1864, 1906, 2098, 2172, 2209, 2226, 2298, 2333, 2402, 2414, 2465, 2510, 2648, 2707, 2880, 3074, 3093, 3132, 3143, 3268, 3349, 3470, 3688, 3715, 3759, 3793, 3810, 3982, 4063, 4102, 4110, 4214, 4278, 4384, 4389, 4721, 4776],
+  1: [1928, 1954, 1965, 2122, 2269, 2347, 2566, 2712, 3081, 3126, 3140, 3205, 3247, 3349, 3363, 3448, 3470, 3506, 3563, 3715, 3718, 3737, 3785, 3908, 3923, 3982, 4001, 4011, 4022, 4102, 4115, 4126, 4272, 4324, 4456, 4776],
+  2: [752, 3435],
+  3: [2226, 2327, 2402, 2411, 2465, 2685, 2853, 2932, 2944, 2959, 3076, 3171, 3175, 3188, 3270, 3514, 3688, 3710, 3745, 3791, 3798, 3826, 3833, 3942, 4023, 4040, 4063, 4170, 4172, 4179, 4197, 4246, 4390, 4529],
+  4: [2143, 2270, 2274, 2347, 2699, 2740, 2847, 3041, 3076, 3106, 3171, 3175, 3261, 3336, 3537, 3632, 3714, 3718, 3731, 3745, 3785, 3798, 3799, 3831, 3833, 3881, 3896, 3923, 4001, 4246, 4351, 4702],
+  5: [2936],
+  6: [699, 842, 1362, 1381, 1605, 2162, 2967],
+  7: [2781],
+  8: [2058, 1381, 1204, 3770, 2252, 2967, 3463, 713, 3092, 856, 2936, 2193, 1605, 1101, 1447, 2751, 699, 710, 3880, 2176, 3849, 778, 3000, 3116]
+}
+
 const Square = (props: SquareProps) => {
-  const { index, value, handleClick } = props;
+  const { index, isSelected, value, handleClick } = props;
+
+  let backgroundColor = '#fff';
+  if (isSelected) {
+    backgroundColor = '#ffd';
+  } else if (value) {
+    backgroundColor = '#0F0';
+  }
+
   const styles = {
     button: {
       width: "100px",
       height: "100px",
-      fontSize: "46px"
+      backgroundColor: backgroundColor,
+      '&:hover': {
+        backgroundColor: '#000',
+        //opacity: [0.9, 0.8, 0.7],
+      },
+      border: '1px solid #000',
     }
   };
   return (
-    <button style={styles.button} onClick={() => handleClick(index)}>
+    <Box style={styles.button} onClick={() => handleClick(index)}>
       {value}
-    </button>
+    </Box>
   );
 };
 
-const data = [
-  { id: 1, name: 'Apple' },
-  { id: 2, name: 'Banana' },
-  { id: 3, name: 'Cherry' },
-  { id: 4, name: 'Durian' },
-];
-
-function ComboBox() {
+function ComboBox(props: ComboBoxProps) {
   const handleFilterOptions = (options: any, state: any) => {
     if (state.inputValue === '') {
       return [];
@@ -48,166 +77,62 @@ function ComboBox() {
     <Autocomplete
       disablePortal
       id="combo-box-demo"
-      options={top100Films}
+      options={playerData}
       sx={{ width: 300 }}
       filterOptions={handleFilterOptions}
+      onChange={props.onChange}
       noOptionsText="Search"
       renderOption={(props, option) => (
-        <Box component="li" sx={{ '& > img': { mr: 2, flexShrink: 0 } }} {...props}>
-          {option.label} ({option.year}-{option.year})
+        <Box component="li" sx={{ '& > img': { mr: 2, flexShrink: 0 } }} {...props} key={option.playerId}>
+          {option.label} ({option.startYear}-{option.endYear})
         </Box>
       )}
-      renderInput={(params) => <TextField {...params} label="Movie" />}
+      renderInput={(params) => <TextField {...params} label="Player Search" />}
     />
   );
 }
 
-// Top 100 films as rated by IMDb users. http://www.imdb.com/chart/top
-const top100Films = [
-  { label: 'The Shawshank Redemption', year: 1994 },
-  { label: 'The Godfather', year: 1972 },
-  { label: 'The Godfather: Part II', year: 1974 },
-  { label: 'The Dark Knight', year: 2008 },
-  { label: '12 Angry Men', year: 1957 },
-  { label: "Schindler's List", year: 1993 },
-  { label: 'Pulp Fiction', year: 1994 },
-  {
-    label: 'The Lord of the Rings: The Return of the King',
-    year: 2003,
-  },
-  { label: 'The Good, the Bad and the Ugly', year: 1966 },
-  { label: 'Fight Club', year: 1999 },
-  {
-    label: 'The Lord of the Rings: The Fellowship of the Ring',
-    year: 2001,
-  },
-  {
-    label: 'Star Wars: Episode V - The Empire Strikes Back',
-    year: 1980,
-  },
-  { label: 'Forrest Gump', year: 1994 },
-  { label: 'Inception', year: 2010 },
-  {
-    label: 'The Lord of the Rings: The Two Towers',
-    year: 2002,
-  },
-  { label: "One Flew Over the Cuckoo's Nest", year: 1975 },
-  { label: 'Goodfellas', year: 1990 },
-  { label: 'The Matrix', year: 1999 },
-  { label: 'Seven Samurai', year: 1954 },
-  {
-    label: 'Star Wars: Episode IV - A New Hope',
-    year: 1977,
-  },
-  { label: 'City of God', year: 2002 },
-  { label: 'Se7en', year: 1995 },
-  { label: 'The Silence of the Lambs', year: 1991 },
-  { label: "It's a Wonderful Life", year: 1946 },
-  { label: 'Life Is Beautiful', year: 1997 },
-  { label: 'The Usual Suspects', year: 1995 },
-  { label: 'Léon: The Professional', year: 1994 },
-  { label: 'Spirited Away', year: 2001 },
-  { label: 'Saving Private Ryan', year: 1998 },
-  { label: 'Once Upon a Time in the West', year: 1968 },
-  { label: 'American History X', year: 1998 },
-  { label: 'Interstellar', year: 2014 },
-  { label: 'Casablanca', year: 1942 },
-  { label: 'City Lights', year: 1931 },
-  { label: 'Psycho', year: 1960 },
-  { label: 'The Green Mile', year: 1999 },
-  { label: 'The Intouchables', year: 2011 },
-  { label: 'Modern Times', year: 1936 },
-  { label: 'Raiders of the Lost Ark', year: 1981 },
-  { label: 'Rear Window', year: 1954 },
-  { label: 'The Pianist', year: 2002 },
-  { label: 'The Departed', year: 2006 },
-  { label: 'Terminator 2: Judgment Day', year: 1991 },
-  { label: 'Back to the Future', year: 1985 },
-  { label: 'Whiplash', year: 2014 },
-  { label: 'Gladiator', year: 2000 },
-  { label: 'Memento', year: 2000 },
-  { label: 'The Prestige', year: 2006 },
-  { label: 'The Lion King', year: 1994 },
-  { label: 'Apocalypse Now', year: 1979 },
-  { label: 'Alien', year: 1979 },
-  { label: 'Sunset Boulevard', year: 1950 },
-  {
-    label: 'Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb',
-    year: 1964,
-  },
-  { label: 'The Great Dictator', year: 1940 },
-  { label: 'Cinema Paradiso', year: 1988 },
-  { label: 'The Lives of Others', year: 2006 },
-  { label: 'Grave of the Fireflies', year: 1988 },
-  { label: 'Paths of Glory', year: 1957 },
-  { label: 'Django Unchained', year: 2012 },
-  { label: 'The Shining', year: 1980 },
-  { label: 'WALL·E', year: 2008 },
-  { label: 'American Beauty', year: 1999 },
-  { label: 'The Dark Knight Rises', year: 2012 },
-  { label: 'Princess Mononoke', year: 1997 },
-  { label: 'Aliens', year: 1986 },
-  { label: 'Oldboy', year: 2003 },
-  { label: 'Once Upon a Time in America', year: 1984 },
-  { label: 'Witness for the Prosecution', year: 1957 },
-  { label: 'Das Boot', year: 1981 },
-  { label: 'Citizen Kane', year: 1941 },
-  { label: 'North by Northwest', year: 1959 },
-  { label: 'Vertigo', year: 1958 },
-  {
-    label: 'Star Wars: Episode VI - Return of the Jedi',
-    year: 1983,
-  },
-  { label: 'Reservoir Dogs', year: 1992 },
-  { label: 'Braveheart', year: 1995 },
-  { label: 'M', year: 1931 },
-  { label: 'Requiem for a Dream', year: 2000 },
-  { label: 'Amélie', year: 2001 },
-  { label: 'A Clockwork Orange', year: 1971 },
-  { label: 'Like Stars on Earth', year: 2007 },
-  { label: 'Taxi Driver', year: 1976 },
-  { label: 'Lawrence of Arabia', year: 1962 },
-  { label: 'Double Indemnity', year: 1944 },
-  {
-    label: 'Eternal Sunshine of the Spotless Mind',
-    year: 2004,
-  },
-  { label: 'Amadeus', year: 1984 },
-  { label: 'To Kill a Mockingbird', year: 1962 },
-  { label: 'Toy Story 3', year: 2010 },
-  { label: 'Logan', year: 2017 },
-  { label: 'Full Metal Jacket', year: 1987 },
-  { label: 'Dangal', year: 2016 },
-  { label: 'The Sting', year: 1973 },
-  { label: '2001: A Space Odyssey', year: 1968 },
-  { label: "Singin' in the Rain", year: 1952 },
-  { label: 'Toy Story', year: 1995 },
-  { label: 'Bicycle Thieves', year: 1948 },
-  { label: 'The Kid', year: 1921 },
-  { label: 'Inglourious Basterds', year: 2009 },
-  { label: 'Snatch', year: 2000 },
-  { label: '3 Idiots', year: 2009 },
-  { label: 'Monty Python and the Holy Grail', year: 1975 },
-];
+
 
 export default function Home() {
   const [selected, setSelected] = useState<number | null>(null);
+  const [guessesRemaining, setGuessesRemaining] = useState<number>(9);
+  const [correctIndices, setCorrectIndices] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0]);
   const handleClick = (index: number) => {
     setSelected(index);
   };
-  const handleTypeahead = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.target.value);
+  const handleChange = (event: any, value: any) => {
+    if (!selected) { return; }
+    // Do something with the selected value
+    setGuessesRemaining(guessesRemaining - 1);
+    if (answer[selected].includes(Number(value.playerId))) {
+      console.log(`Correct! ${correctIndices.map((v, i) => i == selected ? value.playerId : v)}`);
+      setCorrectIndices(correctIndices.map((v, i) => i == selected ? value.playerId : v));
+    } else {
+      
+    }
+    console.log(value);
   };
+  const getCorrectResult = (idx: number) => {
+    return correctIndices[idx] != 0 ? "🟩" : "⬜️";
+  }
+  const handleCopyResults = () => {
+    const countCorrect = correctIndices.filter(v => v != 0).length;
+    const text = `NBA "Immaculate" Grid ${countCorrect}/9:\n\n${getCorrectResult(0)}${getCorrectResult(1)}${getCorrectResult(2)}\n${getCorrectResult(3)}${getCorrectResult(4)}${getCorrectResult(5)}\n${getCorrectResult(6)}${getCorrectResult(7)}${getCorrectResult(8)}`;
+    navigator.clipboard.writeText(text);
+  }
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="grid grid-cols-3 gap-4">
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
-          <Square key={index} index={index} value={selected === index ? 'X' : 'O'} handleClick={handleClick} />
-        ))}
-      </div>
-      {selected !== null && (
-        <ComboBox />
-      )}
-    </main>
+      <main className="flex flex-col items-center justify-between p-24">
+        {selected !== null && correctIndices[selected] == 0 && (
+          <ComboBox onChange={handleChange} />
+        )}
+        <div className="grid grid-cols-3">
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
+            <Square key={index} index={index} isSelected={selected==index} value={correctIndices[index] != 0 ? playerData.find(p => Number(p.playerId) == correctIndices[index])!.label : ''} handleClick={handleClick} />
+          ))}
+          <span>Guesses : {guessesRemaining}</span>
+        </div>
+        {guessesRemaining == 0 && <a href="#" onClick={handleCopyResults}>Copy Results</a>}
+      </main>
   )
 }

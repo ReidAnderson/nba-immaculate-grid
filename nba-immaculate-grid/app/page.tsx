@@ -1,6 +1,6 @@
 'use client'
 
-import { Autocomplete, Box, TextField, ThemeProvider, createTheme } from '@mui/material';
+import { Autocomplete, Box, Button, TextField, ThemeProvider, createTheme } from '@mui/material';
 import Image from 'next/image'
 import { useState } from 'react';
 import playerData from './players.json';
@@ -17,8 +17,9 @@ interface ComboBoxProps {
 }
 
 const puzzle: { [key: string]: string[] } = {
-  row_labels: ['Knicks', 'Timberwolves', '1st Team All-NBA'],
-  col_labels: ['76ers', 'Kings', '25,000 Career Points']
+  number: ['0'],
+  row_labels: ['Knicks', 'Twolves', 'NBA 1st Tm'],
+  col_labels: ['76ers', 'Kings', '25k pts']
 }
 
 const answer: { [key: number | string]: number[] } = {
@@ -95,44 +96,63 @@ function ComboBox(props: ComboBoxProps) {
 
 
 export default function Home() {
+  const [lastGuess, setLastGuess] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [guessesRemaining, setGuessesRemaining] = useState<number>(9);
   const [correctIndices, setCorrectIndices] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0]);
   const handleClick = (index: number) => {
-    setSelected(index);
+    if (guessesRemaining > 0) {
+      setSelected(index);
+    }
   };
   const handleChange = (event: any, value: any) => {
-    if (!selected) { return; }
+    if (selected == null) { return; }
     // Do something with the selected value
     setGuessesRemaining(guessesRemaining - 1);
     if (answer[selected].includes(Number(value.playerId))) {
-      console.log(`Correct! ${correctIndices.map((v, i) => i == selected ? value.playerId : v)}`);
       setCorrectIndices(correctIndices.map((v, i) => i == selected ? value.playerId : v));
+      setLastGuess(`${value.label} (Correct)`)
+      setSelected(null);
     } else {
-      
+      setSelected(null);
+      setLastGuess(`${value.label} (Incorrect)`)
     }
-    console.log(value);
   };
   const getCorrectResult = (idx: number) => {
     return correctIndices[idx] != 0 ? "🟩" : "⬜️";
   }
   const handleCopyResults = () => {
     const countCorrect = correctIndices.filter(v => v != 0).length;
-    const text = `NBA "Immaculate" Grid ${countCorrect}/9:\n\n${getCorrectResult(0)}${getCorrectResult(1)}${getCorrectResult(2)}\n${getCorrectResult(3)}${getCorrectResult(4)}${getCorrectResult(5)}\n${getCorrectResult(6)}${getCorrectResult(7)}${getCorrectResult(8)}`;
+    const text = `NBA "Immaculate" Grid ${puzzle.number[0]} ${countCorrect}/9:\n\n${getCorrectResult(0)}${getCorrectResult(1)}${getCorrectResult(2)}\n${getCorrectResult(3)}${getCorrectResult(4)}${getCorrectResult(5)}\n${getCorrectResult(6)}${getCorrectResult(7)}${getCorrectResult(8)}`;
     navigator.clipboard.writeText(text);
   }
   return (
-      <main className="flex flex-col items-center justify-between p-24">
-        {selected !== null && correctIndices[selected] == 0 && (
-          <ComboBox onChange={handleChange} />
-        )}
-        <div className="grid grid-cols-3">
-          {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
-            <Square key={index} index={index} isSelected={selected==index} value={correctIndices[index] != 0 ? playerData.find(p => Number(p.playerId) == correctIndices[index])!.label : ''} handleClick={handleClick} />
-          ))}
-          <span>Guesses : {guessesRemaining}</span>
-        </div>
-        {guessesRemaining == 0 && <a href="#" onClick={handleCopyResults}>Copy Results</a>}
-      </main>
+    <main className="flex flex-col items-center justify-between p-24">
+      {selected !== null && correctIndices[selected] == 0 && (
+        <ComboBox onChange={handleChange} />
+      )}
+      <div className="grid grid-cols-4">
+        <div></div>
+        <div className="col-label" style={{textAlign: 'center'}}>{puzzle.col_labels[0]}</div>
+        <div className="col-label" style={{textAlign: 'center'}}>{puzzle.col_labels[1]}</div>
+        <div className="col-label" style={{textAlign: 'center'}}>{puzzle.col_labels[2]}</div>
+        <div className="row-label" style={{textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>{puzzle.row_labels[0]}</div>
+        {[0, 1, 2].map((index) => (
+          <Square key={index} index={index} isSelected={selected == index} value={correctIndices[index] != 0 ? playerData.find(p => Number(p.playerId) == correctIndices[index])!.label : ''} handleClick={handleClick} />
+        ))}
+        <div className="row-label" style={{textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>{puzzle.row_labels[1]}</div>
+        {[3, 4, 5].map((index) => (
+          <Square key={index} index={index} isSelected={selected == index} value={correctIndices[index] != 0 ? playerData.find(p => Number(p.playerId) == correctIndices[index])!.label : ''} handleClick={handleClick} />
+        ))}
+        <div className="row-label" style={{textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>{puzzle.row_labels[2]}</div>
+        {[6, 7, 8].map((index) => (
+          <Square key={index} index={index} isSelected={selected == index} value={correctIndices[index] != 0 ? playerData.find(p => Number(p.playerId) == correctIndices[index])!.label : ''} handleClick={handleClick} />
+        ))}
+        <div></div>
+      </div>
+      {lastGuess && <div>Previous Guess: {lastGuess}</div>}
+      <div>Guesses : {guessesRemaining}</div>
+      {guessesRemaining == 0 && <Button variant="contained" onClick={handleCopyResults}>Copy Results</Button>}
+    </main>
   )
 }

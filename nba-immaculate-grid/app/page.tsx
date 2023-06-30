@@ -59,7 +59,7 @@ const Square = (props: SquareProps) => {
 const toISOStringWithTimezone = (date: Date) => {
   const tzOffset = -date.getTimezoneOffset();
   const diff = tzOffset >= 0 ? '+' : '-';
-  const pad = n => `${Math.floor(Math.abs(n))}`.padStart(2, '0');
+  const pad = (n: any) => `${Math.floor(Math.abs(n))}`.padStart(2, '0');
   return date.getFullYear() +
     '-' + pad(date.getMonth() + 1) +
     '-' + pad(date.getDate()) +

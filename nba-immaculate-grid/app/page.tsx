@@ -56,6 +56,20 @@ const Square = (props: SquareProps) => {
   );
 };
 
+const toISOStringWithTimezone = (date: Date) => {
+  const tzOffset = -date.getTimezoneOffset();
+  const diff = tzOffset >= 0 ? '+' : '-';
+  const pad = n => `${Math.floor(Math.abs(n))}`.padStart(2, '0');
+  return date.getFullYear() +
+    '-' + pad(date.getMonth() + 1) +
+    '-' + pad(date.getDate()) +
+    'T' + pad(date.getHours()) +
+    ':' + pad(date.getMinutes()) +
+    ':' + pad(date.getSeconds()) +
+    diff + pad(tzOffset / 60) +
+    ':' + pad(tzOffset % 60);
+};
+
 function ComboBox(props: ComboBoxProps) {
   const handleFilterOptions = (options: any, state: any) => {
     if (state.inputValue === '') {
@@ -87,7 +101,7 @@ function ComboBox(props: ComboBoxProps) {
 }
 
 export default function Home() {
-  const currentDate = new Date().toISOString().slice(0, 10);
+  const currentDate = toISOStringWithTimezone(new Date()).slice(0, 10);
   const typedPuzzle: {[key: string] : PuzzleDefinition} = puzzles;
   const puzzleDefinition = typedPuzzle[currentDate];
   const puzzle = puzzleDefinition.puzzle;

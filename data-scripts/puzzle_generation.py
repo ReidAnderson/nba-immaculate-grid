@@ -1,5 +1,6 @@
 import random
 import sqlite3
+import json
 
 # Connect to the database
 conn = sqlite3.connect('reid-nba.db')
@@ -18,8 +19,8 @@ sql_map = {
     '35,000 Career Minutes Played': 'CT.Minutes > 35000',
     'All-NBA 1st Team': 'ST.FirstTeamAllNba = 1',
     'All Star': 'ST.AllStar = 1',
-    'All-Rookie Team': 'ST.FirstTeamAllRookie = 1 OR ST.SecondTeamAllRookie = 1',
-    'All-Defense Team': 'ST.FirstTeamDefense = 1 OR ST.SecondTeamDefense = 1',
+    'All-Rookie Team': '(ST.FirstTeamAllRookie = 1 OR ST.SecondTeamAllRookie = 1)',
+    'All-Defense Team': '(ST.FirstTeamDefense = 1 OR ST.SecondTeamDefense = 1)',
     '25 Points per Game': 'ST.Points / ST.Games > 25',
     '15 Rebounds per Game': 'ST.TotalRebounds / ST.Games > 15',
     '10 Assists per Game': 'ST.Assists / ST.Games > 10',  
@@ -56,10 +57,14 @@ def get_results_two_teams(team1, team2):
     return player_ids
 
 def get_results_team_and_criteria(team, criteria):
-    cur.execute('''SELECT DISTINCT PTC.player_id, PTC.player FROM reid_PlayerTeamCombos AS PTC 
+    if criteria in possible_career_achievements:
+        cur.execute('''SELECT DISTINCT PTC.player_id, PTC.player FROM reid_PlayerTeamCombos AS PTC 
                 INNER JOIN reid_CareerTotals AS CT ON PTC.player_id = CT.player_id 
-                INNER JOIN reid_SeasonTotals AS ST ON PTC.player_id = ST.player_id 
                 WHERE PTC.team1 = ? AND ''' + sql_map[criteria], (team,))
+    else:
+        cur.execute('''SELECT DISTINCT ST.player_id, ST.player FROM reid_SeasonTotals AS ST
+                WHERE ST.tm = ? AND ''' + sql_map[criteria], (team,))
+    
     results = cur.fetchall()
     
     player_ids = []
@@ -70,8 +75,6 @@ def get_results_team_and_criteria(team, criteria):
     return player_ids
 
 def get_results_criteria_and_criteria(criteria1, criteria2):
-    print(criteria1)
-    print(criteria2)
     cur.execute('''SELECT DISTINCT CT.player_id, CT.player FROM reid_CareerTotals AS CT 
                 INNER JOIN reid_SeasonTotals AS ST ON CT.player_id = ST.player_id 
                 WHERE ''' + sql_map[criteria1] + ''' AND ''' + sql_map[criteria2])
@@ -84,7 +87,7 @@ def get_results_criteria_and_criteria(criteria1, criteria2):
 
     return player_ids
 
-def generate_puzzle(used_puzzles, last_puzzle_number=0):
+def generate_puzzle(used_puzzles, last_puzzle_number=0, override_criteria = None):
     # pick 4 from possible_teams
     teams = random.sample(possible_teams, 4)
 
@@ -96,6 +99,9 @@ def generate_puzzle(used_puzzles, last_puzzle_number=0):
     achievements = random.sample(possible_career_achievements + possible_season_achievements, 6 - len(teams))
 
     criteria = teams + achievements
+
+    if override_criteria is not None:
+        criteria = override_criteria
 
     # Make sure there are no duplicates
     if len(criteria) != len(set(criteria)):
@@ -125,7 +131,6 @@ def generate_puzzle(used_puzzles, last_puzzle_number=0):
             if correct_answers is None or len(correct_answers) == 0:
                 return (None, f'no results for criteria: {rows[i]}, {columns[j]}')
             idx = i * len(columns) + j
-            print(idx)
             results.append(correct_answers)
 
     # Discard any puzzle where there is only 1 result for multiple cells
@@ -160,4 +165,17 @@ def generate_puzzle(used_puzzles, last_puzzle_number=0):
 # get_results('NYK', 'PHI')
 # get_results('NYK', '25,000 Career Points')
 # get_results('All-NBA 1st Team', '25,000 Career Points')
-json.dumps(generate_puzzle([], 0))
+
+puzzles = []
+last_number = 1
+for i in range(0, 200):
+    result = generate_puzzle(puzzles, last_number)
+    if (result is not None and len(result) > 0 and result[0] is None):
+        continue
+
+    puzzles = result
+    last_number += 1
+
+# puzzles = generate_puzzle(puzzles, 0, ["SAC", "IND", "GSW", "MIA", "All-NBA 1st Team", "All-Defense Team"])
+
+print(json.dumps(puzzles))
